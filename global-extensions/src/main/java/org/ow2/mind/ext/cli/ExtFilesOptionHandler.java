@@ -23,18 +23,6 @@ public class ExtFilesOptionHandler implements CommandOptionHandler {
 
 	private static final String EXT_FILES_CONTEXT_KEY = "ext-files";
 
-	/**
-	 * Returns the source class loader that has been registered in the given
-	 * context.
-	 * 
-	 * @param context the current context.
-	 * @return the source class loader
-	 */
-	public static ClassLoader getSourceClassLoader(
-			final Map<Object, Object> context) {
-		return (ClassLoader) context.get(EXT_FILES_CONTEXT_KEY);
-	}
-
 	@SuppressWarnings("unchecked")
 	public static List<String> getExtFiles(final Map<Object, Object> context) {
 		List<String> ext = (List<String>) context.get(EXT_FILES_CONTEXT_KEY);
