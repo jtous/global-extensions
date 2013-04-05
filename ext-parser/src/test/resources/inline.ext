@@ -1,0 +1,6 @@
+
+component **.* {
+	@Inline
+	binds *.* to *.*;
+}
+

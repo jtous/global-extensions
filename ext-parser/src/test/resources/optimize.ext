@@ -1,0 +1,61 @@
+
+
+primitive **.* {
+	@Const
+	attribute * *;
+}
+	
+composite **.* {
+	@Static
+	binds *.* to *.*;
+}
+
+@Singleton
+primitive **.* {
+
+}
+
+@Singleton
+composite **.* {
+
+}
+
+@Singleton
+type **.* {
+
+}
+
+primitive **.* {
+	@Single
+	provides * as *;
+}
+
+@StaticBindings
+composite **.* {
+
+}
+
+@GarbageUnusedInternals
+composite **.* {
+
+}
+
+@GarbageUnusedInternals
+primitive **.* {
+
+}
+
+/*
+composite **.* {
+	@Single
+	provides * as *;
+}
+
+
+type **.* {
+	@Single
+	provides * as *;
+}
+*/
+
+

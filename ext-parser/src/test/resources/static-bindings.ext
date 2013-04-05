@@ -1,0 +1,6 @@
+
+@StaticBindings
+composite **.* {
+
+}
+	

@@ -1,0 +1,6 @@
+
+@controller.ContentController
+composite **.* {
+
+}
+	
