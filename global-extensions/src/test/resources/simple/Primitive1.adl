@@ -1,0 +1,8 @@
+
+import simple.api.Type;
+
+@Singleton
+primitive simple.Primitive1 extends Type {
+
+  source {{ }};
+}

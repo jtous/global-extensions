@@ -1,7 +1,7 @@
 
 import simple.api.Type;
 
-primitive simple.Primitive extends Type {
+primitive simple.Primitive2 extends Type {
 
   source {{ }};
 }
