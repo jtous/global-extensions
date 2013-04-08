@@ -57,7 +57,7 @@ public class TestExtensions {
 				bind(Loader.class).toChainStartingWith(EXTLoader.class)
 				.endingWith(ADLParser.class);
 			}
-			
+
 			protected void configureEXTJTBParser() {
 				bind(EXTJTBParser.class).to(ExtJTBProcessor.class);
 			}
@@ -77,6 +77,11 @@ public class TestExtensions {
 		return is;
 	}
 
+	/**
+	 * Test if the extension loader can apply @Static successfully on all bindings of a composite, with the help
+	 * of the all-static extension.
+	 * @throws Exception
+	 */
 	@Test(groups = {"functional"})
 	public void testApplyAllStatic() throws Exception {
 
@@ -84,23 +89,28 @@ public class TestExtensions {
 		List<String> extFiles = new ArrayList<String>();
 		extFiles.add("all-static.ext");
 		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
-		
+
 		// TODO: we should check if the @Static annotation is always available (the annotation processor throws
 		// an exception an returns no annotation otherwise)
 		Definition d = loader.load("simple.Composite", context);
 		assertTrue(d instanceof BindingContainer, "Loaded composite didn't contain any binding.");
-		
+
 		Binding[] bindings = ((BindingContainer) d).getBindings();
-		
+
 		// For all bindings check that the annotation has been applied correctly
 		for (Binding b : bindings) {
 			Static staticAnno = AnnotationHelper.getAnnotation(b, Static.class);
 			assertNotNull(staticAnno, "Binding wasn't annotated @Static ! all-static.ext failed.");
 		}
-		
+
 		return;
 	}
-	
+
+	/**
+	 * Test if the extension loader can apply @Singleton successfully on a composite, with the help
+	 * of the composite-singleton extension.
+	 * @throws Exception
+	 */
 	@Test(groups = {"functional"})
 	public void testApplyCompositeSingleton() throws Exception {
 
@@ -108,13 +118,44 @@ public class TestExtensions {
 		List<String> extFiles = new ArrayList<String>();
 		extFiles.add("composite-singleton.ext");
 		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
-		
+
 		Definition d = loader.load("simple.Composite", context);
-		
+
 		Singleton singletonAnno = AnnotationHelper.getAnnotation(d, Singleton.class);
-		
+
 		assertNotNull(singletonAnno, "Expected definition to be transformed as a Singleton, but was not - composite-singleton.ext failed.");
-		
+
+		return;
+	}
+
+	/**
+	 * Just a combination of the two previous tests.
+	 * @throws Exception
+	 */
+	@Test(groups = {"functional"})
+	public void testApplyCompositeSingletonAndAllStatic() throws Exception {
+
+		// Init the list of ext-files
+		List<String> extFiles = new ArrayList<String>();
+		extFiles.add("all-static.ext");
+		extFiles.add("composite-singleton.ext");
+		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
+
+		Definition d = loader.load("simple.Composite", context);
+
+		// Here come the checks
+		Singleton singletonAnno = AnnotationHelper.getAnnotation(d, Singleton.class);		
+		assertNotNull(singletonAnno, "Expected definition to be transformed as a Singleton, but was not - composite-singleton.ext failed.");
+
+		assertTrue(d instanceof BindingContainer, "Loaded composite didn't contain any binding.");
+
+		Binding[] bindings = ((BindingContainer) d).getBindings();
+		// For all bindings check that the annotation has been applied correctly
+		for (Binding b : bindings) {
+			Static staticAnno = AnnotationHelper.getAnnotation(b, Static.class);
+			assertNotNull(staticAnno, "Binding wasn't annotated @Static ! all-static.ext failed.");
+		}
+
 		return;
 	}
 }
