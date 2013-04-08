@@ -2,7 +2,7 @@
 
 
 composite **.* {
-	@Static
+	@Static(ifPossible=true)
 	binds *.* to *.*;
 }
 	
