@@ -21,7 +21,7 @@ public class ExtFilesOptionHandler implements CommandOptionHandler {
 	/** The ID of the "src-path" option. */
 	public static final String  EXT_FILES_ID             = "org.ow2.mind.ext.ExtFiles";
 
-	private static final String EXT_FILES_CONTEXT_KEY = "ext-files";
+	public static final String EXT_FILES_CONTEXT_KEY = "ext-files";
 
 	@SuppressWarnings("unchecked")
 	public static List<String> getExtFiles(final Map<Object, Object> context) {

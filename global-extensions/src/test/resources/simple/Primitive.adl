@@ -1,0 +1,7 @@
+
+import simple.api.Type;
+
+primitive simple.Primitive extends Type {
+
+  source {{ }};
+}
