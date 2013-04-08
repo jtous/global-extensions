@@ -16,21 +16,24 @@
 
  Contact: mind@ow2.org
 
- Authors: Matthieu Leclercq
- Contributors: Julien Tous
+ Authors: Stephane Seyvoz
+ Contributors: 
 
  -->
 <plugin
     id="org.ow2.mind.global-extensions"
     name="The Global-extensions plugin">
 	
-	<!-- Maybe combine instead of override ? -->
 	<extension
         point="org.ow2.mind.plugin.guice-module">
         <module
             class="org.ow2.mind.ext.EXTModule">
             <override
                 class="org.ow2.mind.adl.ADLFrontendModule" />
+			<enableWhen>
+				<cmdOption
+					id="org.ow2.mind.ext.ExtFiles" />
+			</enableWhen>
         </module>
     </extension>
 
@@ -46,15 +49,5 @@
             argDesc="&lt;files list&gt;" />
 
     </extension>
-
-<!-- 
-    <extension
-        point="org.ow2.mind.plugin.BooleanEvaluator"
-        name="Command-line option Evaluators">
-        <evaluator
-            name="cmdOption"
-            class="org.ow2.mind.cli.CmdOptionBooleanEvaluator" />
-    </extension>
--->
 
 </plugin>

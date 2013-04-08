@@ -16,8 +16,10 @@
  *
  * Contact: mind@ow2.org
  *
- * Authors: Matthieu Leclercq
- * Contributors: 
+ * Authors: Stephane Seyvoz
+ * Contributors:
+ *
+ * Code was -VERY- inspired by the adl-parser. 
  */
 
 options {

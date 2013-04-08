@@ -1,5 +1,5 @@
 
-type api.Type {
+type simple.api.Type {
   provides Call as sItf;
   requires Call as cItf;
 }
