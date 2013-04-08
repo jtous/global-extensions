@@ -21,6 +21,7 @@ import org.ow2.mind.adl.CachingDefinitionReferenceResolver;
 import org.ow2.mind.adl.DefinitionReferenceResolver;
 import org.ow2.mind.adl.ErrorLoader;
 import org.ow2.mind.adl.ExtendsLoader;
+import org.ow2.mind.adl.annotation.predefined.Singleton;
 import org.ow2.mind.adl.annotation.predefined.Static;
 import org.ow2.mind.adl.ast.Binding;
 import org.ow2.mind.adl.ast.BindingContainer;
@@ -87,15 +88,32 @@ public class TestExtensions {
 		// TODO: we should check if the @Static annotation is always available (the annotation processor throws
 		// an exception an returns no annotation otherwise)
 		Definition d = loader.load("simple.Composite", context);
-		assertTrue(d instanceof BindingContainer, "Loaded composite didn't contain any binding");
+		assertTrue(d instanceof BindingContainer, "Loaded composite didn't contain any binding.");
 		
 		Binding[] bindings = ((BindingContainer) d).getBindings();
 		
 		// For all bindings check that the annotation has been applied correctly
 		for (Binding b : bindings) {
-			Static staticAnno = AnnotationHelper.getAnnotation((Node) b, Static.class);
-			assertNotNull(staticAnno);
+			Static staticAnno = AnnotationHelper.getAnnotation(b, Static.class);
+			assertNotNull(staticAnno, "Binding wasn't annotated @Static ! all-static.ext failed.");
 		}
+		
+		return;
+	}
+	
+	@Test(groups = {"functional"})
+	public void testApplyCompositeSingleton() throws Exception {
+
+		// Init the list of ext-files
+		List<String> extFiles = new ArrayList<String>();
+		extFiles.add("composite-singleton.ext");
+		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
+		
+		Definition d = loader.load("simple.Composite", context);
+		
+		Singleton singletonAnno = AnnotationHelper.getAnnotation(d, Singleton.class);
+		
+		assertNotNull(singletonAnno, "Expected definition to be transformed as a Singleton, but was not - composite-singleton.ext failed.");
 		
 		return;
 	}

@@ -14,15 +14,15 @@ import org.objectweb.fractal.adl.Node;
 import org.objectweb.fractal.adl.interfaces.Interface;
 import org.objectweb.fractal.adl.types.TypeInterface;
 import org.objectweb.fractal.adl.util.ClassLoaderHelper;
+import org.ow2.mind.NameHelper;
 import org.ow2.mind.PathHelper;
 import org.ow2.mind.adl.AbstractDelegatingLoader;
+import org.ow2.mind.adl.ast.ASTHelper;
 import org.ow2.mind.adl.ast.Binding;
 import org.ow2.mind.adl.ast.BindingContainer;
 import org.ow2.mind.annotation.Annotation;
 import org.ow2.mind.annotation.AnnotationChecker;
-import org.ow2.mind.annotation.AnnotationFactory;
 import org.ow2.mind.annotation.AnnotationHelper;
-import org.ow2.mind.error.ErrorManager;
 import org.ow2.mind.ext.cli.ExtFilesOptionHandler;
 import org.ow2.mind.ext.parser.EXTJTBParser;
 import org.xml.sax.SAXException;
@@ -46,12 +46,14 @@ public class EXTLoader extends AbstractDelegatingLoader {
 	public Definition load(String name, Map<Object, Object> context)
 			throws ADLException {
 
+		// Call the EXTJTBProcessor/Parser to load extensions from the context as Definitions.
+		// The extension Definitions list is then stored in "exts". 
 		loadExtensions(context);
 
-		// TODO: check whether we have to apply our extensions before or after
-		// according to our position in the delegation chain
+		// Load the target definition
 		Definition d = clientLoader.load(name, context);
 
+		// Apply
 		if (!exts.isEmpty())
 			applyExt(exts, d);
 
@@ -83,7 +85,6 @@ public class EXTLoader extends AbstractDelegatingLoader {
 
 	private void loadExtensions(Map<Object, Object> context) throws ADLException {
 
-		@SuppressWarnings("unchecked")
 		List<String> extFiles = ExtFilesOptionHandler.getExtFiles(context);
 
 		Definition extDef = null;
@@ -371,8 +372,8 @@ public class EXTLoader extends AbstractDelegatingLoader {
 						(extToComponent.equals("*") || extToComponent.equals(defToComponent)) &&
 						(extToInterface.equals("*") || extToInterface.equals(defToInterface))) {
 
-					// apply annotations
-					applyAnnotations((Node) extBinding, (Node) b);
+					// apply annotations to the targeted binding
+					applyAnnotations(extBinding, b);
 				} /*else {
 					if (!biExtFrom.compName.equals("*") && !biExtFrom.itfName.equals("*") && 
 							!biExtTo.compName.equals("*") && !biExtTo.itfName.equals("*")) {
@@ -393,6 +394,43 @@ public class EXTLoader extends AbstractDelegatingLoader {
 		applyProperties((Node) ext, (Node) container);
 	}
 	 */
+
+	private void applyDefinition(Definition extDef, Definition targetDef) {
+
+		String extDefName = extDef.getName(); 
+		String targetDefName = targetDef.getName();
+
+		String extDefPackage 	= extDefName.substring(0, extDefName.lastIndexOf('.'));
+		String extDefSimpleName	= extDefName.substring(extDefName.lastIndexOf('.') + 1);
+		String targetDefPackage		= targetDefName.substring(0, targetDefName.lastIndexOf('.'));
+		String targetDefSimpleName	= targetDefName.substring(targetDefName.lastIndexOf('.') + 1);;
+
+
+		// check if the extension can be applied to the target definition
+
+		// first check compatibility
+		if (	((ASTHelper.isComposite(extDef) && ASTHelper.isComposite(targetDef))
+				|| ((ASTHelper.isPrimitive(extDef) && ASTHelper.isPrimitive(targetDef))
+						// in the case of a primitive, both should be abstract or both should not be abstract, but no incompatibility allowed
+						&& ((ASTHelper.isAbstract(extDef) && ASTHelper.isAbstract(targetDef))
+								|| (!ASTHelper.isAbstract(extDef) && !ASTHelper.isAbstract(targetDef))
+								)
+						)
+						|| (ASTHelper.isType(extDef) && ASTHelper.isType(targetDef))
+				)
+
+				// now check names are ok
+				&& ((extDefSimpleName.equals("*") || extDefSimpleName.equals(targetDefSimpleName)) &&
+						(extDefPackage.equals("**") || extDefPackage.equals(targetDefPackage)) ))
+
+			// apply annotations
+			try {
+				applyAnnotations(extDef, targetDef);
+			} catch (ADLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	}
 
 	/* What the hell are directives useful for anyway ?
 	private void applyDirectives(ComponentContainer ext, ComponentContainer container) {
@@ -471,14 +509,14 @@ public class EXTLoader extends AbstractDelegatingLoader {
 					// TODO: check why a copy...?
 					//Definition extCopy = ASTHelper.copyNode(ext, true);
 
-					//					applyComponent(extCopy, definition);
-					//					applyItfs(extCopy, definition);
 					try {
+						applyDefinition(ext, definition);
 						applyBindings(ext, definition);
 					} catch (ADLException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
+					//					applyItfs(extCopy, definition);
 					//					applyImplem(extCopy, definition);
 					//					applyAttributes(extCopy, definition);
 					//					applyDirectives(extCopy, definition);
