@@ -11,21 +11,12 @@ import java.util.Map;
 
 import org.objectweb.fractal.adl.Definition;
 import org.objectweb.fractal.adl.Loader;
-import org.objectweb.fractal.adl.Node;
 import org.ow2.mind.CommonFrontendModule;
-import org.ow2.mind.adl.ADLFrontendModule;
 import org.ow2.mind.adl.AbstractADLFrontendModule;
-import org.ow2.mind.adl.BasicDefinitionReferenceResolver;
-import org.ow2.mind.adl.CacheLoader;
-import org.ow2.mind.adl.CachingDefinitionReferenceResolver;
-import org.ow2.mind.adl.DefinitionReferenceResolver;
-import org.ow2.mind.adl.ErrorLoader;
-import org.ow2.mind.adl.ExtendsLoader;
 import org.ow2.mind.adl.annotation.predefined.Singleton;
 import org.ow2.mind.adl.annotation.predefined.Static;
 import org.ow2.mind.adl.ast.Binding;
 import org.ow2.mind.adl.ast.BindingContainer;
-import org.ow2.mind.adl.imports.ImportDefinitionReferenceResolver;
 import org.ow2.mind.adl.parser.ADLParser;
 import org.ow2.mind.annotation.AnnotationHelper;
 import org.ow2.mind.ext.cli.ExtFilesOptionHandler;
@@ -53,11 +44,13 @@ public class TestExtensions {
 		final Injector injector = Guice.createInjector(new CommonFrontendModule(),
 				new PluginLoaderModule(), new IDLFrontendModule(), new AbstractADLFrontendModule() {
 
+			@SuppressWarnings("unused")
 			protected void configureTest() {
 				bind(Loader.class).toChainStartingWith(EXTLoader.class)
 				.endingWith(ADLParser.class);
 			}
 
+			@SuppressWarnings("unused")
 			protected void configureEXTJTBParser() {
 				bind(EXTJTBParser.class).to(ExtJTBProcessor.class);
 			}
