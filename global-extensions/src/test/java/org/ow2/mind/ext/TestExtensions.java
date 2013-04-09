@@ -104,15 +104,12 @@ public class TestExtensions {
 		List<String> extFiles = new ArrayList<String>();
 		extFiles.add("all-static.ext");
 		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
-
-		// TODO: we should check if the @Static annotation is always available (the annotation processor throws
-		// an exception an returns no annotation otherwise)
+		
 		Definition d = loader.load("simple.Composite", context);
 		assertTrue(d instanceof BindingContainer, "Loaded composite didn't contain any binding.");
 
-		Binding[] bindings = ((BindingContainer) d).getBindings();
-
 		// For all bindings check that the annotation has been applied correctly
+		Binding[] bindings = ((BindingContainer) d).getBindings();
 		for (Binding b : bindings) {
 			Static staticAnno = AnnotationHelper.getAnnotation(b, Static.class);
 			assertNotNull(staticAnno, "Binding wasn't annotated @Static ! all-static.ext failed.");
@@ -166,6 +163,33 @@ public class TestExtensions {
 
 		Binding[] bindings = ((BindingContainer) d).getBindings();
 		// For all bindings check that the annotation has been applied correctly
+		for (Binding b : bindings) {
+			Static staticAnno = AnnotationHelper.getAnnotation(b, Static.class);
+			assertNotNull(staticAnno, "Binding wasn't annotated @Static ! all-static.ext failed.");
+		}
+
+		return;
+	}
+	
+	/**
+	 * Test if the extension loader can apply @Static successfully on all bindings of a composite, with the help
+	 * of the all-static extension.
+	 * @throws Exception
+	 */
+	@Test(groups = {"functional"})
+	public void testApplyAllStaticToTemplate() throws Exception {
+
+		// Init the list of ext-files
+		List<String> extFiles = new ArrayList<String>();
+		extFiles.add("all-static.ext");
+		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
+		
+		// Do the job
+		Definition d = loader.load("simple.TemplateComposite<Primitive1>", context);
+		assertTrue(d instanceof BindingContainer, "Loaded composite didn't contain any binding.");
+
+		// For all bindings check that the annotation has been applied correctly
+		Binding[] bindings = ((BindingContainer) d).getBindings();
 		for (Binding b : bindings) {
 			Static staticAnno = AnnotationHelper.getAnnotation(b, Static.class);
 			assertNotNull(staticAnno, "Binding wasn't annotated @Static ! all-static.ext failed.");
