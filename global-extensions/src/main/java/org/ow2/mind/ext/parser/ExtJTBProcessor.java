@@ -25,6 +25,8 @@ package org.ow2.mind.ext.parser;
 import static org.objectweb.fractal.adl.NodeUtil.castNodeError;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -106,6 +108,7 @@ import org.ow2.mind.ext.jtb.syntaxtree.ImportDefinition;
 import org.ow2.mind.ext.jtb.syntaxtree.IntegerValue;
 import org.ow2.mind.ext.jtb.syntaxtree.InterfaceDefinition;
 import org.ow2.mind.ext.jtb.syntaxtree.NodeChoice;
+import org.ow2.mind.ext.jtb.syntaxtree.NodeList;
 import org.ow2.mind.ext.jtb.syntaxtree.NodeOptional;
 import org.ow2.mind.ext.jtb.syntaxtree.NodeSequence;
 import org.ow2.mind.ext.jtb.syntaxtree.NodeToken;
@@ -149,6 +152,8 @@ import org.xml.sax.SAXException;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
+import java.util.List;
+
 /**
  * Translate the JTB AST of an ADL file into a "fractal-adl like" AST.
  */
@@ -175,10 +180,13 @@ implements EXTJTBParser, ParserConstants {
 	protected String            definitionName;
 	protected String            filename;
 
-	public Definition parseEXT(final InputStream is, final String extDefinitionName,
+	private List<Definition>	definitions;
+
+	public List<Definition> parseEXT(final InputStream is, final String extDefinitionName,
 			final String filename) throws ADLException {
 		final Parser parser = new Parser(is);
 		EXTFile content;
+		definitions = new ArrayList<Definition>();
 		try {
 			content = parser.EXTFile();
 		} catch (final ParseException e) {
@@ -198,7 +206,10 @@ implements EXTJTBParser, ParserConstants {
 		this.definitionName = extDefinitionName;
 		this.filename = filename;
 		typeParameters = new HashSet<String>();
-		return (Definition) visit(content, null);
+
+		visit(content, null);
+
+		return definitions;
 	}
 
 	protected Node newNode(final String name) {
@@ -261,16 +272,23 @@ implements EXTJTBParser, ParserConstants {
 	// File level grammar
 	// ---------------------------------------------------------------------------
 
+	/**
+	 * SSZ: Here we use a dirty hack not to return a node but a List of Definitions
+	 * see public Node visit(final ArchitectureDefinition n, final Node argu) below
+	 * (non-Javadoc)
+	 * @see org.ow2.mind.ext.jtb.visitor.GJDepthFirst#visit(org.ow2.mind.ext.jtb.syntaxtree.EXTFile, java.lang.Object)
+	 */
 	@Override
 	public Node visit(final EXTFile n, final Node argu) {
 		assert argu == null;
-		final Definition def = (Definition) n.f1.accept(this, argu);
-		assert def != null;
+		n.f1.accept(this, argu);
+		assert definitions != null;
 
 		// process imports
-		n.f0.accept(this, def);
+		for (Definition def : definitions)
+			n.f0.accept(this, def);
 
-		return def;
+		return null;
 	}
 
 	@Override
@@ -303,9 +321,21 @@ implements EXTJTBParser, ParserConstants {
 		return imp;
 	}
 
+
+	/**
+	 * SSZ: Dirty list hack was used to allow multi parse
+	 */
+	@Override
+	public Node visit(final NodeList n, final Node argu) {
+		for ( Enumeration<org.ow2.mind.ext.jtb.syntaxtree.Node> e = n.elements(); e.hasMoreElements(); ) {
+			definitions.add((Definition) e.nextElement().accept(this,argu));
+		}
+		return null;
+	}
+	
 	@Override
 	public Node visit(final ArchitectureDefinition n, final Node argu) {
-		return n.f0.accept(this, argu);
+		return (Definition) n.f0.accept(this, argu);
 	}
 
 	// ---------------------------------------------------------------------------

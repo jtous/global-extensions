@@ -23,12 +23,13 @@
 package org.ow2.mind.ext.parser;
 
 import java.io.InputStream;
+import java.util.List;
 
 import org.objectweb.fractal.adl.ADLException;
 import org.objectweb.fractal.adl.Definition;
 
 public interface EXTJTBParser {
 
-	Definition parseEXT(final InputStream is, final String extDefinitionName,
+	List<Definition> parseEXT(final InputStream is, final String extDefinitionName,
 			final String filename) throws ADLException;
 }

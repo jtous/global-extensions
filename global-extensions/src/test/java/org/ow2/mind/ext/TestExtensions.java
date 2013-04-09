@@ -153,6 +153,36 @@ public class TestExtensions {
 		extFiles.add("composite-singleton.ext");
 		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
 
+		Definition d = loader.load("simple.Composite2", context);
+
+		// Here come the checks
+		Singleton singletonAnno = AnnotationHelper.getAnnotation(d, Singleton.class);		
+		assertNotNull(singletonAnno, "Expected definition to be transformed as a Singleton, but was not - composite-singleton.ext failed.");
+
+		assertTrue(d instanceof BindingContainer, "Loaded composite didn't contain any binding.");
+
+		Binding[] bindings = ((BindingContainer) d).getBindings();
+		// For all bindings check that the annotation has been applied correctly
+		for (Binding b : bindings) {
+			Static staticAnno = AnnotationHelper.getAnnotation(b, Static.class);
+			assertNotNull(staticAnno, "Binding wasn't annotated @Static ! all-static.ext failed.");
+		}
+
+		return;
+	}
+	
+	/**
+	 * Just a combination of the two first tests, except the 2 are in the same ext file.
+	 * @throws Exception
+	 */
+	@Test(groups = {"functional"})
+	public void testApplyCompositeAllSingletonStatic() throws Exception {
+
+		// Init the list of ext-files
+		List<String> extFiles = new ArrayList<String>();
+		extFiles.add("composite-all-static-singleton.ext");
+		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
+
 		Definition d = loader.load("simple.Composite", context);
 
 		// Here come the checks

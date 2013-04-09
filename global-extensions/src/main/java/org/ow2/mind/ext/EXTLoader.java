@@ -90,18 +90,18 @@ public class EXTLoader extends AbstractDelegatingLoader {
 
 		List<String> extFiles = ExtFilesOptionHandler.getExtFiles(context);
 
-		Definition extDef = null;
+		List<Definition> extDefs = null;
 
 		for (String extFile : extFiles) {
 			// TODO: check if the 2 last parameters are really useful in our case
-			extDef = processor.parseEXT(getEXT(extFile), extFile.substring(0, extFile.length() - 4), extFile);
-
-			// Inspired from the adl-frontend AnnotationLoader class
-			// We wish to load the annotations from our extension definitions (it not only checks, but also converts
-			// the annotation decoration text to real objects attached to the AST)
-			annotationCheckerItf.checkAnnotations(extDef, context);
-
-			exts.add(extDef);
+			extDefs = processor.parseEXT(getEXT(extFile), extFile.substring(0, extFile.length() - 4), extFile);
+			for (Definition extDef : extDefs) {
+				// Inspired from the adl-frontend AnnotationLoader class
+				// We wish to load the annotations from our extension definitions (it not only checks, but also converts
+				// the annotation decoration text to real objects attached to the AST)
+				annotationCheckerItf.checkAnnotations(extDef, context);
+				exts.add(extDef);
+			}
 		}
 	}
 
@@ -285,7 +285,7 @@ public class EXTLoader extends AbstractDelegatingLoader {
 		}
 		return matchingItfs;
 	}
-	*/
+	 */
 
 	/*
 	private void applyItfs(ComponentContainer ext, ComponentContainer container) {
@@ -521,7 +521,7 @@ public class EXTLoader extends AbstractDelegatingLoader {
 					try {
 						// Here type doesn't matter
 						applyDefinition(ext, definition);
-						
+
 						// Here we need to check
 						if (ASTHelper.isComposite(ext) && ASTHelper.isComposite(definition))
 							applyBindings(ext, definition);

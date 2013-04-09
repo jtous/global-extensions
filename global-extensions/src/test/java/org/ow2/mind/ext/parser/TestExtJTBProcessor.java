@@ -26,6 +26,7 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.io.InputStream;
+import java.util.List;
 
 import org.objectweb.fractal.adl.Definition;
 import org.ow2.mind.CommonFrontendModule;
@@ -62,8 +63,8 @@ public class TestExtJTBProcessor {
 
   @Test(groups = {"functional"})
   public void test1() throws Exception {
-    final Definition node = processor.parseEXT(getEXT("all-static.ext"), "Test1",
+    final List<Definition> node = processor.parseEXT(getEXT("all-static.ext"), "Test1",
         "Test1.ext");
-    assertTrue(node instanceof Definition);
+    assertTrue(node instanceof List<?>);
   }
 }

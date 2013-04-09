@@ -252,7 +252,8 @@ TOKEN :
 void EXTFile() : {}
 {
   (LOOKAHEAD( (Annotation())* <IMPORT> ) ImportDefinition() ) *
-  ArchitectureDefinition()
+  	(  	  ArchitectureDefinition()
+  	)+
   <EOF>
 }
 
@@ -296,7 +297,7 @@ void TypeDefinitionReference() : {}
 void TypeDefinitionBody() : {}
 {
   <LBRACE> ( TypeDefinitionElement() ) * <RBRACE>
-  | ( TypeDefinitionElement() ) *
+  | ( LOOKAHEAD(2) TypeDefinitionElement() ) *
 }
 
 void TypeDefinitionElement() : {}
@@ -362,7 +363,7 @@ void Argument() : {}
 void PrimitiveDefinitionBody() : {}
 {
   <LBRACE> ( PrimitiveDefinitionElement() ) * <RBRACE>
-  | ( PrimitiveDefinitionElement() ) *
+  | ( LOOKAHEAD(2) PrimitiveDefinitionElement() ) *
 }
 
 void PrimitiveDefinitionElement() : {}
@@ -432,7 +433,7 @@ void ExtendedCompositeDefinitions() : {}
 void CompositeDefinitionBody() : {}
 {
   <LBRACE> ( CompositeDefinitionElement() ) * <RBRACE>
-  | ( CompositeDefinitionElement() ) *
+  | ( LOOKAHEAD(2) CompositeDefinitionElement() ) *
 }
 
 void CompositeDefinitionElement() : {}
