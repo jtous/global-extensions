@@ -202,6 +202,9 @@ public class EXTLoader extends AbstractDelegatingLoader {
 
 	/**
 	 * Merging annotations from the extension node and the target definition node.
+	 * 
+	 * TODO: Enable transfering annotations arguments/parameters in the operations (not yet supported).
+	 * 
 	 * @param The extension node from which to get annotations from.
 	 * @param The definition node to apply annotations to.
 	 * @throws ADLException 
@@ -599,7 +602,7 @@ public class EXTLoader extends AbstractDelegatingLoader {
 	/**
 	 * TODO: Check if it's still a good algorithm with Mind
 	 * 
-	 * isConcernByExt is used to test if componentPartialPath sub-component's might be concern by
+	 * isConcernedByExt is used to test if componentPartialPath sub-component's might be concern by
 	 * a given extension
 	 * @param extension
 	 * @param definitionPartialPath

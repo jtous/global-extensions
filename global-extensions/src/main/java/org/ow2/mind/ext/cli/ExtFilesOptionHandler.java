@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.objectweb.fractal.adl.util.ClassLoaderHelper;
-import org.ow2.mind.PathHelper;
 import org.ow2.mind.cli.CmdOption;
 import org.ow2.mind.cli.CmdPathOption;
 import org.ow2.mind.cli.CommandLine;
@@ -82,6 +81,9 @@ public class ExtFilesOptionHandler implements CommandOptionHandler {
 		// need storage for the new list that will replace the previous one, but
 		// with valid content
 		List<String> validContextExtFiles = new ArrayList<String>();
+		
+		// copy the old values
+		validContextExtFiles.addAll(contextExtFiles);
 		
 		for (String extFile : newExtFiles) {
 			// check ext files
