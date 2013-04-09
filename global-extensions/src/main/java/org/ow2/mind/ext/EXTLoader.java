@@ -37,6 +37,8 @@ import org.ow2.mind.adl.ast.BindingContainer;
 import org.ow2.mind.annotation.Annotation;
 import org.ow2.mind.annotation.AnnotationChecker;
 import org.ow2.mind.annotation.AnnotationHelper;
+import org.ow2.mind.annotation.ast.AnnotationContainer;
+import org.ow2.mind.annotation.ast.AnnotationNode;
 import org.ow2.mind.ext.cli.ExtFilesOptionHandler;
 import org.ow2.mind.ext.parser.EXTJTBParser;
 import org.xml.sax.SAXException;
@@ -50,7 +52,7 @@ public class EXTLoader extends AbstractDelegatingLoader {
 	@Inject
 	protected AnnotationChecker annotationCheckerItf;
 
-	public List<Definition>	exts = new ArrayList<Definition>(); 
+	public List<Definition>	exts; 
 	public static String 	EXT_EXTENSION = ".ext";
 
 	/**
@@ -60,6 +62,10 @@ public class EXTLoader extends AbstractDelegatingLoader {
 	public Definition load(String name, Map<Object, Object> context)
 			throws ADLException {
 
+		// reinitialize at every call (else we get duplicates, and the same annotations get applied multiple times which
+		// the AnnotationHelper do not like at all)
+		exts = new ArrayList<Definition>();
+		
 		// Call the EXTJTBProcessor/Parser to load extensions from the context as Definitions.
 		// The extension Definitions list is then stored in "exts". 
 		loadExtensions(context);
@@ -212,6 +218,21 @@ public class EXTLoader extends AbstractDelegatingLoader {
 	private void applyAnnotations(Node ext, Node n) throws ADLException {
 		Annotation[] extAnnos = AnnotationHelper.getAnnotations(ext);
 
+		// Here exist two kind of annotations... 
+		// The AnnotationDecoration system AND the AnnotationContainer cast...
+		// depending on where we are in the delegation chain ?
+		// Still unsure !
+		
+		// debug test, useful when our Loader isn't followedBy(AnnotationLoader.class)
+//		if (n instanceof AnnotationContainer) {
+//			AnnotationContainer annoContainer = (AnnotationContainer) n;
+//			AnnotationNode[] arrayOfAnnotations = annoContainer.getAnnotations();
+//			for (AnnotationNode annoNode : arrayOfAnnotations) {
+//				System.out.println("[SSZ Dirty Debug] EXTLoader: In AnnotationContainer: " + annoNode.getType());
+//			}
+//		}
+			
+		
 		for (Annotation extAnno : extAnnos)
 			AnnotationHelper.addAnnotation(n, extAnno);
 

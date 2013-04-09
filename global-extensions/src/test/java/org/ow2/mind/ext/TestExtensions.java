@@ -35,10 +35,15 @@ import org.objectweb.fractal.adl.Definition;
 import org.objectweb.fractal.adl.Loader;
 import org.ow2.mind.CommonFrontendModule;
 import org.ow2.mind.adl.AbstractADLFrontendModule;
+import org.ow2.mind.adl.annotation.AnnotationLoader;
 import org.ow2.mind.adl.annotation.predefined.Singleton;
 import org.ow2.mind.adl.annotation.predefined.Static;
+import org.ow2.mind.adl.ast.ASTHelper;
 import org.ow2.mind.adl.ast.Binding;
 import org.ow2.mind.adl.ast.BindingContainer;
+import org.ow2.mind.adl.ast.Component;
+import org.ow2.mind.adl.ast.ComponentContainer;
+import org.ow2.mind.adl.ast.OptimASTHelper;
 import org.ow2.mind.adl.parser.ADLParser;
 import org.ow2.mind.annotation.AnnotationHelper;
 import org.ow2.mind.ext.cli.ExtFilesOptionHandler;
@@ -69,6 +74,7 @@ public class TestExtensions {
 			@SuppressWarnings("unused")
 			protected void configureTest() {
 				bind(Loader.class).toChainStartingWith(EXTLoader.class)
+				.followedBy(AnnotationLoader.class) // this method is called in the standard delegation chain, we should keep it to be representative of a real-case scenario
 				.endingWith(ADLParser.class);
 			}
 
@@ -104,7 +110,7 @@ public class TestExtensions {
 		List<String> extFiles = new ArrayList<String>();
 		extFiles.add("all-static.ext");
 		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
-		
+
 		Definition d = loader.load("simple.Composite", context);
 		assertTrue(d instanceof BindingContainer, "Loaded composite didn't contain any binding.");
 
@@ -170,7 +176,7 @@ public class TestExtensions {
 
 		return;
 	}
-	
+
 	/**
 	 * Just a combination of the two first tests, except the 2 are in the same ext file.
 	 * @throws Exception
@@ -200,7 +206,7 @@ public class TestExtensions {
 
 		return;
 	}
-	
+
 	/**
 	 * Test if the extension loader can apply @Static successfully on all bindings of a composite, with the help
 	 * of the all-static extension.
@@ -213,7 +219,7 @@ public class TestExtensions {
 		List<String> extFiles = new ArrayList<String>();
 		extFiles.add("all-static.ext");
 		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
-		
+
 		// Do the job
 		Definition d = loader.load("simple.TemplateComposite<Primitive1>", context);
 		assertTrue(d instanceof BindingContainer, "Loaded composite didn't contain any binding.");
@@ -227,4 +233,59 @@ public class TestExtensions {
 
 		return;
 	}
+
+	/**
+	 * Test if the extension loader can apply @Singleton successfully on every kind of ADL files, with the help
+	 * of the all-singleton extension.
+	 * 
+	 * @throws Exception
+	 */
+	@Test(groups = {"functional"})
+	public void testApplyAllSingleton() throws Exception {
+
+		// Init the list of ext-files
+		List<String> extFiles = new ArrayList<String>();
+		extFiles.add("all-singleton.ext");
+		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
+
+		// check composite
+		Definition d = loader.load("simple.Composite2", context);
+		Singleton singletonAnno = AnnotationHelper.getAnnotation(d, Singleton.class);
+		assertNotNull(singletonAnno, "Expected definition '" + d.getName() + "' to be transformed as a Singleton, but was not - all-singleton.ext failed.");
+
+		// check template
+		d = loader.load("simple.TemplateComposite<Primitive2>", context);
+		singletonAnno = AnnotationHelper.getAnnotation(d, Singleton.class);
+		assertNotNull(singletonAnno, "Expected definition '" + d.getName() + "' to be transformed as a Singleton, but was not - all-singleton.ext failed.");
+
+		// check primitive
+		d = loader.load("simple.Primitive2", context);
+		singletonAnno = AnnotationHelper.getAnnotation(d, Singleton.class);
+		assertNotNull(singletonAnno, "Expected definition '" + d.getName() + "' to be transformed as a Singleton, but was not - all-singleton.ext failed.");
+
+		// check type
+		d = loader.load("simple.api.Type", context);
+		singletonAnno = AnnotationHelper.getAnnotation(d, Singleton.class);
+		assertNotNull(singletonAnno, "Expected definition '" + d.getName() + "' to be transformed as a Singleton, but was not - all-singleton.ext failed.");
+	}
+
+	/**
+	 * Test if the extension loader fails as expected when re-applying an annotation on
+	 * a component already annotated with the same annotation.
+	 * This test shall be removed if we change the current behavior to a real merge (thus
+	 * no more raising an error).
+	 * 
+	 * @throws Exception
+	 */
+	@Test(groups = {"functional"}, expectedExceptions=IllegalArgumentException.class)
+	public void testErrorApplySingletonOnAlreadySingleton() throws Exception {
+		// Init the list of ext-files
+		List<String> extFiles = new ArrayList<String>();
+		extFiles.add("all-singleton.ext");
+		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
+		
+		// Has to raise an error
+		loader.load("simple.Primitive1", context);
+	}
+
 }
