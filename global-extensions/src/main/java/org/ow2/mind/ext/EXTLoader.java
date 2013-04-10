@@ -56,7 +56,7 @@ public class EXTLoader extends AbstractDelegatingLoader {
 	protected AnnotationChecker annotationCheckerItf;
 
 	private Map<Object, Object> context;
-	
+
 	public List<Definition>	exts; 
 	public static String 	EXT_EXTENSION = ".ext";
 
@@ -64,20 +64,20 @@ public class EXTLoader extends AbstractDelegatingLoader {
 	 * Logger.
 	 */
 	private static Logger logger = FractalADLLogManager.getLogger("EXT");
-	
+
 	/**
 	 * In this implementation, unlike with Think, we want to decorate/annotate
 	 * only the current node, no recursion.
 	 */
 	public Definition load(String name, Map<Object, Object> context)
 			throws ADLException {
-		
+
 		this.context = context;
-		
+
 		// reinitialize at every call (else we get duplicates, and the same annotations get applied multiple times which
 		// the AnnotationHelper do not like at all)
 		exts = new ArrayList<Definition>();
-		
+
 		// Call the EXTJTBProcessor/Parser to load extensions from the context as Definitions.
 		// The extension Definitions list is then stored in "exts". 
 		loadExtensions(context);
@@ -114,13 +114,13 @@ public class EXTLoader extends AbstractDelegatingLoader {
 		List<Definition> extDefs = null;
 
 		for (String extFile : extFiles) {
-			
+
 			InputStream is = getEXT(extFile);
 			if (is == null) { // file not found
 				logger.warning("Requested '" + extFile + "' extension could not be found - skipping");
 				continue; // ignore erroneous extension file
 			}
-			
+
 			// TODO: check if the 2 last parameters are really useful in our case
 			extDefs = processor.parseEXT(is, extFile.substring(0, extFile.length() - 4), extFile);
 			for (Definition extDef : extDefs) {
@@ -239,30 +239,30 @@ public class EXTLoader extends AbstractDelegatingLoader {
 	 * @throws ADLException 
 	 */
 	private void applyAnnotations(Node ext, Node n) throws ADLException {
-		
+
 		// Let's merge the annotations, taking shorcuts inspired from AnnotationHelper !
-		
+
 		AnnotationDecoration extDecoration = (AnnotationDecoration) ext.astGetDecoration("annotations");
-	    if (extDecoration == null)
-	      return;
-		
-	    AnnotationDecoration nDecoration = (AnnotationDecoration) n.astGetDecoration("annotations");
-	    if (nDecoration == null) {
-	    	nDecoration = new AnnotationDecoration();
-	    }
-	    
-	    AnnotationDecoration mergeResultDecoration = null;
-	    
-	    try {
-	    	mergeResultDecoration = (AnnotationDecoration) nDecoration.mergeDecoration(extDecoration);
+		if (extDecoration == null)
+			return;
+
+		AnnotationDecoration nDecoration = (AnnotationDecoration) n.astGetDecoration("annotations");
+		if (nDecoration == null) {
+			nDecoration = new AnnotationDecoration();
+		}
+
+		AnnotationDecoration mergeResultDecoration = null;
+
+		try {
+			mergeResultDecoration = (AnnotationDecoration) nDecoration.mergeDecoration(extDecoration);
 		} catch (MergeException e) {
 			// This exception will never happen since there is not a single branch of code where it is thrown !
 			e.printStackTrace();
 		}
-	    
-	    if (mergeResultDecoration != null)
-	    	n.astSetDecoration("annotations", mergeResultDecoration);
-	    
+
+		if (mergeResultDecoration != null)
+			n.astSetDecoration("annotations", mergeResultDecoration);
+
 	}
 
 	/*
@@ -454,14 +454,35 @@ public class EXTLoader extends AbstractDelegatingLoader {
 
 	private void applyDefinition(Definition extDef, Definition targetDef) {
 
+		String extDefPackage 		= "";
+		String extDefSimpleName 	= "";
+		String targetDefPackage 	= "";
+		String targetDefSimpleName 	= "";
+		
 		String extDefName = extDef.getName(); 
 		String targetDefName = targetDef.getName();
 
-		String extDefPackage 	= extDefName.substring(0, extDefName.lastIndexOf('.'));
-		String extDefSimpleName	= extDefName.substring(extDefName.lastIndexOf('.') + 1);
-		String targetDefPackage		= targetDefName.substring(0, targetDefName.lastIndexOf('.'));
-		String targetDefSimpleName	= targetDefName.substring(targetDefName.lastIndexOf('.') + 1);;
+		int extensionLastDotIndex 	= extDefName.lastIndexOf('.');
+		int definitionLastDotIndex 	= targetDefName.lastIndexOf('.');
 
+		if (extensionLastDotIndex != -1) {
+			extDefPackage 	= extDefName.substring(0, extensionLastDotIndex);
+			extDefSimpleName	= extDefName.substring(extensionLastDotIndex + 1);
+		}
+
+		if (definitionLastDotIndex != -1) {
+			targetDefPackage	= targetDefName.substring(0, definitionLastDotIndex);
+			targetDefSimpleName	= targetDefName.substring(definitionLastDotIndex + 1);;
+		}
+
+		// handle case when definition has no package
+		if (definitionLastDotIndex == -1) {
+			// only allow cases where there are both NO package, or extension package equals to "**" (any)
+			if (extensionLastDotIndex != -1 && !extDefPackage.equals("**"))
+				return;
+
+			// in any case if there were both no package, the String will be "" (not null) so we can continue
+		}
 
 		// check if the extension can be applied to the target definition
 
@@ -607,15 +628,38 @@ public class EXTLoader extends AbstractDelegatingLoader {
 	 * @return true if the component definition matches
 	 */
 	private boolean definitionFullNameMatch(Definition extension, Definition compDefinition) {
-		int lastDotIndex = extension.getName().lastIndexOf(".");
-		String extDefinitionPath = extension.getName().substring(0, lastDotIndex);
-		String extDefinitionName = extension.getName().substring(lastDotIndex + 1, extension.getName().length());
+		String extDefinitionPackage = "";
+		String extDefinitionName = "";
+		String compDefPath = "";
+		String compDefName = "";
 
-		lastDotIndex = compDefinition.getName().lastIndexOf(".");
-		String compDefPath = compDefinition.getName().substring(0, lastDotIndex);
-		String compDefName = compDefinition.getName().substring(lastDotIndex + 1, compDefinition.getName().length());
+		int extensionLastDotIndex 	= extension.getName().lastIndexOf(".");
+		int definitionLastDotIndex 	= compDefinition.getName().lastIndexOf(".");
 
-		if (!extDefinitionPath.equals("**") && !extDefinitionPath.equals(compDefPath)) return false;
+		if (extensionLastDotIndex != -1) {
+			extDefinitionPackage = extension.getName().substring(0, extensionLastDotIndex);
+			extDefinitionName = extension.getName().substring(extensionLastDotIndex + 1, extension.getName().length());
+		}
+
+		if (definitionLastDotIndex != -1) {
+			compDefPath = compDefinition.getName().substring(0, definitionLastDotIndex);
+			compDefName = compDefinition.getName().substring(definitionLastDotIndex + 1, compDefinition.getName().length());
+		}
+
+		// handle case when definition has no package
+		if (definitionLastDotIndex == -1) {
+			// only allow cases where there are both NO package, or extension package equals to "**" (any)
+			if (extensionLastDotIndex != -1 && !extDefinitionPackage.equals("**"))
+				return false;
+
+			// in any case if there were both no package, the String will be "" (not null) so we can continue
+		}
+
+		// If the path is wrong, leave
+		if (!extDefinitionPackage.equals("**") && !extDefinitionPackage.equals(compDefPath))
+			return false;
+
+		// Else finish evaluation
 		return (extDefinitionName.equals("*") || extDefinitionName.equals(compDefName));
 	}
 
