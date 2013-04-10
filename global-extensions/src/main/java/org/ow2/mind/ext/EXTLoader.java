@@ -26,10 +26,13 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.objectweb.fractal.adl.ADLException;
 import org.objectweb.fractal.adl.Definition;
 import org.objectweb.fractal.adl.Node;
+import org.objectweb.fractal.adl.merger.MergeException;
+import org.objectweb.fractal.adl.util.FractalADLLogManager;
 import org.ow2.mind.adl.AbstractDelegatingLoader;
 import org.ow2.mind.adl.ast.ASTHelper;
 import org.ow2.mind.adl.ast.Binding;
@@ -37,8 +40,8 @@ import org.ow2.mind.adl.ast.BindingContainer;
 import org.ow2.mind.annotation.Annotation;
 import org.ow2.mind.annotation.AnnotationChecker;
 import org.ow2.mind.annotation.AnnotationHelper;
-import org.ow2.mind.annotation.ast.AnnotationContainer;
-import org.ow2.mind.annotation.ast.AnnotationNode;
+import org.ow2.mind.annotation.AnnotationHelper.AnnotationDecoration;
+import org.ow2.mind.cli.SrcPathOptionHandler;
 import org.ow2.mind.ext.cli.ExtFilesOptionHandler;
 import org.ow2.mind.ext.parser.EXTJTBParser;
 import org.xml.sax.SAXException;
@@ -52,16 +55,25 @@ public class EXTLoader extends AbstractDelegatingLoader {
 	@Inject
 	protected AnnotationChecker annotationCheckerItf;
 
+	private Map<Object, Object> context;
+	
 	public List<Definition>	exts; 
 	public static String 	EXT_EXTENSION = ".ext";
 
+	/**
+	 * Logger.
+	 */
+	private static Logger logger = FractalADLLogManager.getLogger("EXT");
+	
 	/**
 	 * In this implementation, unlike with Think, we want to decorate/annotate
 	 * only the current node, no recursion.
 	 */
 	public Definition load(String name, Map<Object, Object> context)
 			throws ADLException {
-
+		
+		this.context = context;
+		
 		// reinitialize at every call (else we get duplicates, and the same annotations get applied multiple times which
 		// the AnnotationHelper do not like at all)
 		exts = new ArrayList<Definition>();
@@ -81,13 +93,17 @@ public class EXTLoader extends AbstractDelegatingLoader {
 	}
 
 	/**
-	 * TODO: check if return info can be null ?
+	 * Load extension file from source-path.
 	 * @param fileName
 	 * @return
 	 * @throws Exception
 	 */
 	protected InputStream getEXT(final String fileName) {
-		final ClassLoader loader = getClass().getClassLoader();
+		// running from command line ? (source-path is initialized in this case)
+		ClassLoader loader = SrcPathOptionHandler.getSourceClassLoader(context);
+		if (loader == null)
+			// running from tests instead
+			loader = getClass().getClassLoader();
 		final InputStream is = loader.getResourceAsStream(fileName);
 		return is;
 	}
@@ -95,12 +111,18 @@ public class EXTLoader extends AbstractDelegatingLoader {
 	private void loadExtensions(Map<Object, Object> context) throws ADLException {
 
 		List<String> extFiles = ExtFilesOptionHandler.getExtFiles(context);
-
 		List<Definition> extDefs = null;
 
 		for (String extFile : extFiles) {
+			
+			InputStream is = getEXT(extFile);
+			if (is == null) { // file not found
+				logger.warning("Requested '" + extFile + "' extension could not be found - skipping");
+				continue; // ignore erroneous extension file
+			}
+			
 			// TODO: check if the 2 last parameters are really useful in our case
-			extDefs = processor.parseEXT(getEXT(extFile), extFile.substring(0, extFile.length() - 4), extFile);
+			extDefs = processor.parseEXT(is, extFile.substring(0, extFile.length() - 4), extFile);
 			for (Definition extDef : extDefs) {
 				// Inspired from the adl-frontend AnnotationLoader class
 				// We wish to load the annotations from our extension definitions (it not only checks, but also converts
@@ -208,34 +230,39 @@ public class EXTLoader extends AbstractDelegatingLoader {
 
 	/**
 	 * Merging annotations from the extension node and the target definition node.
+	 * In the case of duplicates, the merge strategy is to override with the extension annotation.
 	 * 
-	 * TODO: Enable transfering annotations arguments/parameters in the operations (not yet supported).
+	 * TODO: Enable transfering annotations arguments/parameters in the operations, as a real clone (not yet supported).
 	 * 
 	 * @param The extension node from which to get annotations from.
 	 * @param The definition node to apply annotations to.
 	 * @throws ADLException 
 	 */
 	private void applyAnnotations(Node ext, Node n) throws ADLException {
-		Annotation[] extAnnos = AnnotationHelper.getAnnotations(ext);
-
-		// Here exist two kind of annotations... 
-		// The AnnotationDecoration system AND the AnnotationContainer cast...
-		// depending on where we are in the delegation chain ?
-		// Still unsure !
 		
-		// debug test, useful when our Loader isn't followedBy(AnnotationLoader.class)
-//		if (n instanceof AnnotationContainer) {
-//			AnnotationContainer annoContainer = (AnnotationContainer) n;
-//			AnnotationNode[] arrayOfAnnotations = annoContainer.getAnnotations();
-//			for (AnnotationNode annoNode : arrayOfAnnotations) {
-//				System.out.println("[SSZ Dirty Debug] EXTLoader: In AnnotationContainer: " + annoNode.getType());
-//			}
-//		}
-			
+		// Let's merge the annotations, taking shorcuts inspired from AnnotationHelper !
 		
-		for (Annotation extAnno : extAnnos)
-			AnnotationHelper.addAnnotation(n, extAnno);
-
+		AnnotationDecoration extDecoration = (AnnotationDecoration) ext.astGetDecoration("annotations");
+	    if (extDecoration == null)
+	      return;
+		
+	    AnnotationDecoration nDecoration = (AnnotationDecoration) n.astGetDecoration("annotations");
+	    if (nDecoration == null) {
+	    	nDecoration = new AnnotationDecoration();
+	    }
+	    
+	    AnnotationDecoration mergeResultDecoration = null;
+	    
+	    try {
+	    	mergeResultDecoration = (AnnotationDecoration) nDecoration.mergeDecoration(extDecoration);
+		} catch (MergeException e) {
+			// This exception will never happen since there is not a single branch of code where it is thrown !
+			e.printStackTrace();
+		}
+	    
+	    if (mergeResultDecoration != null)
+	    	n.astSetDecoration("annotations", mergeResultDecoration);
+	    
 	}
 
 	/*

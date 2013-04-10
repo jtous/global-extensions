@@ -269,23 +269,4 @@ public class TestExtensions {
 		assertNotNull(singletonAnno, "Expected definition '" + d.getName() + "' to be transformed as a Singleton, but was not - all-singleton.ext failed.");
 	}
 
-	/**
-	 * Test if the extension loader fails as expected when re-applying an annotation on
-	 * a component already annotated with the same annotation.
-	 * This test shall be removed if we change the current behavior to a real merge (thus
-	 * no more raising an error).
-	 * 
-	 * @throws Exception
-	 */
-	@Test(groups = {"functional"}, expectedExceptions=IllegalArgumentException.class)
-	public void testErrorApplySingletonOnAlreadySingleton() throws Exception {
-		// Init the list of ext-files
-		List<String> extFiles = new ArrayList<String>();
-		extFiles.add("all-singleton.ext");
-		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
-		
-		// Has to raise an error
-		loader.load("simple.Primitive1", context);
-	}
-
 }

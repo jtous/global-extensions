@@ -28,13 +28,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.objectweb.fractal.adl.util.ClassLoaderHelper;
+import org.objectweb.fractal.adl.util.FractalADLLogManager;
 import org.ow2.mind.cli.CmdOption;
 import org.ow2.mind.cli.CmdPathOption;
 import org.ow2.mind.cli.CommandLine;
 import org.ow2.mind.cli.CommandOptionHandler;
 import org.ow2.mind.cli.InvalidCommandLineException;
+import org.ow2.mind.cli.SrcPathOptionHandler;
 import org.ow2.mind.plugin.util.Assert;
 
 public class ExtFilesOptionHandler implements CommandOptionHandler {
@@ -44,6 +47,11 @@ public class ExtFilesOptionHandler implements CommandOptionHandler {
 
 	public static final String EXT_FILES_CONTEXT_KEY = "ext-files";
 
+	/**
+	 * Logger.
+	 */
+	private static Logger logger = FractalADLLogManager.getLogger("EXT");
+	
 	@SuppressWarnings("unchecked")
 	public static List<String> getExtFiles(final Map<Object, Object> context) {
 		List<String> ext = (List<String>) context.get(EXT_FILES_CONTEXT_KEY);
@@ -52,13 +60,13 @@ public class ExtFilesOptionHandler implements CommandOptionHandler {
 	}
 
 	/**
-	 * Utility allowing to load an EXT file. Inspired from BasicADLLocator.
+	 * Use the source-path class loader to find the extensions
 	 * @param name
 	 * @param context
 	 * @return
 	 */
-	public URL findSourceEXT(final String name, final Map<Object, Object> context) {
-		return ClassLoaderHelper.getClassLoader(this, context).getResource(name + ".ext");
+	public static URL findSourceEXT(final String name, final Map<Object, Object> context) {
+		return SrcPathOptionHandler.getSourceClassLoader(context).getResource(name + ".ext");
 	}
 
 	// TODO: allow using an ext-folder where to find ext-files ?
@@ -85,15 +93,19 @@ public class ExtFilesOptionHandler implements CommandOptionHandler {
 		// copy the old values
 		validContextExtFiles.addAll(contextExtFiles);
 		
+		File f;
 		for (String extFile : newExtFiles) {
 			// check ext files
 			
 			URL extURL = findSourceEXT(extFile, context);
+			if (extURL == null || extURL.getPath() == null) {
+				logger.warning("'" + extFile + "' extension can't be found  - skipping");
+				continue;
+			}
 			
-			final File f = new File(extURL.getPath());
+			f = new File(extURL.getPath());
 			if (!f.exists()) {
-				System.out.println("Warning '" + f.getAbsolutePath()
-						+ "' extension can't be found ");
+				logger.warning("'" + f.getAbsolutePath() + "' extension can't be found ");
 			} else if (f.isDirectory()) {
 				System.out.println("Warning: \"" + extFile
 						+ "\" is a directory, extension ignored.");
