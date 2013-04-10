@@ -1,0 +1,12 @@
+
+import simple.api.Type;
+
+composite simple.Composite2 extends Type {
+
+  contains Primitive2 as clt;
+  contains Primitive2 as srv;
+  
+  binds this.sItf to clt.sItf;
+  binds clt.cItf to srv.sItf;
+  binds srv.cItf to this.cItf;
+}

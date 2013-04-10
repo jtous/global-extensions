@@ -1,0 +1,14 @@
+
+
+
+composite **.* {
+	@Static
+	binds *.* to *.*;
+}
+	
+
+@Singleton
+composite **.* {
+	
+}
+	
