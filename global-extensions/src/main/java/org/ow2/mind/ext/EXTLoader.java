@@ -24,6 +24,8 @@ package org.ow2.mind.ext;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -31,12 +33,15 @@ import java.util.logging.Logger;
 import org.objectweb.fractal.adl.ADLException;
 import org.objectweb.fractal.adl.Definition;
 import org.objectweb.fractal.adl.Node;
+import org.objectweb.fractal.adl.interfaces.Interface;
+import org.objectweb.fractal.adl.interfaces.InterfaceContainer;
 import org.objectweb.fractal.adl.merger.MergeException;
 import org.objectweb.fractal.adl.util.FractalADLLogManager;
 import org.ow2.mind.adl.AbstractDelegatingLoader;
 import org.ow2.mind.adl.ast.ASTHelper;
 import org.ow2.mind.adl.ast.Binding;
 import org.ow2.mind.adl.ast.BindingContainer;
+import org.ow2.mind.adl.ast.MindInterface;
 import org.ow2.mind.annotation.Annotation;
 import org.ow2.mind.annotation.AnnotationChecker;
 import org.ow2.mind.annotation.AnnotationHelper;
@@ -238,7 +243,7 @@ public class EXTLoader extends AbstractDelegatingLoader {
 	 * @param The definition node to apply annotations to.
 	 * @throws ADLException 
 	 */
-	private void applyAnnotations(Node ext, Node n) throws ADLException {
+	private void applyAnnotations(Node ext, Node n) {
 
 		// Let's merge the annotations, taking shorcuts inspired from AnnotationHelper !
 
@@ -301,59 +306,85 @@ public class EXTLoader extends AbstractDelegatingLoader {
 			}
 		}
 	}*/
-
-	/*
-	private List<Interface> matchingInterfaces(Interface[] itfs, TypeInterface extItf) {
+	
+	private List<Interface> matchingInterfaces(Interface[] itfs, MindInterface extItf) {
 		List<Interface> matchingItfs = new ArrayList<Interface>(Arrays.asList(itfs));
 		String extItfName = extItf.getName();
 		String extItfSignature = extItf.getSignature();
+		
+		// check if both are provided or both required
 		for (Interface itf : itfs) {
-			if (!extItf.getRole().equals(((TypeInterface) itf).getRole())) {
+			assert itf instanceof MindInterface;
+			MindInterface mItf = (MindInterface) itf;
+			if (!extItf.getRole().equals(mItf.getRole()))
 				matchingItfs.remove(itf);
-
-			}
 		}
 
+		// check itf instance name
 		if (!"*".equals(extItfName)) {
 			for (Iterator<Interface> iter = matchingItfs.iterator(); iter.hasNext();) {
-				TypeInterface itf = (TypeInterface) iter.next();
-				if (!itf.getName().equals(extItfName)) {
+				Interface itf = (Interface) iter.next();
+				assert itf instanceof MindInterface;
+				if (!((MindInterface) itf).getName().equals(extItfName)) {
 					iter.remove();
 				}
 			}
 		}
 
+		// check the type
+		// do we need to check the path too ? since people may use absolute names with package
+		// not only imports
 		if (!"*".equals(extItfSignature)) {
 			for (Iterator<Interface> iter = matchingItfs.iterator(); iter.hasNext();) {
-				TypeInterface itf = (TypeInterface) iter.next();
-				if (!itf.getSignature().equals(extItfSignature)) {
+				Interface itf = (Interface) iter.next();
+				assert itf instanceof MindInterface;
+				if (!((MindInterface) itf).getSignature().equals(extItfSignature)) {
 					iter.remove();
 				}
 			}
 		}
+		
 		return matchingItfs;
 	}
-	 */
 
-	/*
-	private void applyItfs(ComponentContainer ext, ComponentContainer container) {
-		for (Interface i : ((InterfaceContainer) ext).getInterfaces()) {
-			if (!checkCondition((Node) i, container)) continue;
-			TypeInterface extItf = (TypeInterface) i;
+	
+	private boolean areSameKind(Definition extDef, Definition targetDef) {
+		return ((ASTHelper.isComposite(extDef) && ASTHelper.isComposite(targetDef))
+				|| ((ASTHelper.isPrimitive(extDef) && ASTHelper.isPrimitive(targetDef))
+						// in the case of a primitive, both should be abstract or both should not be abstract, but no incompatibility allowed
+						&& ((ASTHelper.isAbstract(extDef) && ASTHelper.isAbstract(targetDef))
+								|| (!ASTHelper.isAbstract(extDef) && !ASTHelper.isAbstract(targetDef))
+								)
+						)
+						|| (ASTHelper.isType(extDef) && ASTHelper.isType(targetDef)));
+	}
+	
+	private void applyItfs(Definition extDef, Definition targetDef) {
+		if (! (extDef instanceof InterfaceContainer))
+			return;
+		
+		if (!areSameKind(extDef, targetDef))
+			return;
+		
+		for (Interface i : ((InterfaceContainer) extDef).getInterfaces()) {
+			//if (!checkCondition((Node) i, targetDef)) continue; // example: "if hasCltItf" 
+			assert i instanceof MindInterface;
+			MindInterface extItf = (MindInterface) i;
 			List<Interface> matchingItfs = 
-					matchingInterfaces(((InterfaceContainer) container).getInterfaces(), extItf);
+					matchingInterfaces(((InterfaceContainer) targetDef).getInterfaces(), extItf);
 			if (matchingItfs.size() == 0) {
-				if (!"*".equals(extItf.getName()) && !"*".equals(extItf.getSignature()))
-					ASTHelper.addInterface(container, extItf);
+				return; // we don't currently want to add architectural elements
+//				if (!"*".equals(extItf.getName()) && !"*".equals(extItf.getSignature()))
+//					ASTHelper.addInterface(targetDef, extItf);
 			} else {
 				for (Interface itf : matchingItfs) {
-					applyProperties((Node) extItf, (Node) itf);
+					applyAnnotations(extItf, itf);
 				}
 			}
 		}
 	}
 
-
+	/*
 	private void applyAttributes(ComponentContainer ext, ComponentContainer container) {
 		Attributes extAtts = ((AttributesContainer) ext).getAttributes();
 		if (extAtts == null) return;
@@ -487,27 +518,13 @@ public class EXTLoader extends AbstractDelegatingLoader {
 		// check if the extension can be applied to the target definition
 
 		// first check compatibility
-		if (	((ASTHelper.isComposite(extDef) && ASTHelper.isComposite(targetDef))
-				|| ((ASTHelper.isPrimitive(extDef) && ASTHelper.isPrimitive(targetDef))
-						// in the case of a primitive, both should be abstract or both should not be abstract, but no incompatibility allowed
-						&& ((ASTHelper.isAbstract(extDef) && ASTHelper.isAbstract(targetDef))
-								|| (!ASTHelper.isAbstract(extDef) && !ASTHelper.isAbstract(targetDef))
-								)
-						)
-						|| (ASTHelper.isType(extDef) && ASTHelper.isType(targetDef))
-				)
-
+		if (areSameKind(extDef, targetDef)
 				// now check names are ok
 				&& ((extDefSimpleName.equals("*") || extDefSimpleName.equals(targetDefSimpleName)) &&
 						(extDefPackage.equals("**") || extDefPackage.equals(targetDefPackage)) ))
 
 			// apply annotations
-			try {
-				applyAnnotations(extDef, targetDef);
-			} catch (ADLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			applyAnnotations(extDef, targetDef);
 	}
 
 	/* What the hell are directives useful for anyway ?
@@ -590,7 +607,8 @@ public class EXTLoader extends AbstractDelegatingLoader {
 					try {
 						// Here type doesn't matter
 						applyDefinition(ext, definition);
-
+						applyItfs(ext, definition);
+						
 						// Here we need to check
 						if (ASTHelper.isComposite(ext) && ASTHelper.isComposite(definition))
 							applyBindings(ext, definition);

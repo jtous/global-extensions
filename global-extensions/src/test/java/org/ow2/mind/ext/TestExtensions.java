@@ -33,16 +33,21 @@ import java.util.Map;
 
 import org.objectweb.fractal.adl.Definition;
 import org.objectweb.fractal.adl.Loader;
+import org.objectweb.fractal.adl.interfaces.Interface;
+import org.objectweb.fractal.adl.interfaces.InterfaceContainer;
+import org.objectweb.fractal.adl.types.TypeInterface;
 import org.ow2.mind.CommonFrontendModule;
 import org.ow2.mind.adl.AbstractADLFrontendModule;
 import org.ow2.mind.adl.annotation.AnnotationLoader;
 import org.ow2.mind.adl.annotation.predefined.Singleton;
 import org.ow2.mind.adl.annotation.predefined.Static;
+import org.ow2.mind.adl.annotations.Single;
 import org.ow2.mind.adl.ast.ASTHelper;
 import org.ow2.mind.adl.ast.Binding;
 import org.ow2.mind.adl.ast.BindingContainer;
 import org.ow2.mind.adl.ast.Component;
 import org.ow2.mind.adl.ast.ComponentContainer;
+import org.ow2.mind.adl.ast.MindInterface;
 import org.ow2.mind.adl.ast.OptimASTHelper;
 import org.ow2.mind.adl.parser.ADLParser;
 import org.ow2.mind.annotation.AnnotationHelper;
@@ -267,6 +272,37 @@ public class TestExtensions {
 		d = loader.load("simple.api.Type", context);
 		singletonAnno = AnnotationHelper.getAnnotation(d, Singleton.class);
 		assertNotNull(singletonAnno, "Expected definition '" + d.getName() + "' to be transformed as a Singleton, but was not - all-singleton.ext failed.");
+	}
+	
+	/**
+	 * Test if the extension loader can apply @Static successfully on all bindings of a composite, with the help
+	 * of the all-static extension.
+	 * @throws Exception
+	 */
+	@Test(groups = {"functional"})
+	public void testApplyAllServerSingleItfs() throws Exception {
+
+		// Init the list of ext-files
+		List<String> extFiles = new ArrayList<String>();
+		extFiles.add("all-single-itfs.ext");
+		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
+
+		Definition d = loader.load("simple.api.Type", context);
+		
+		// the test
+		assert d instanceof InterfaceContainer;
+		
+		Single singleAnno = null;
+		Interface[] dItfs = ((InterfaceContainer) d).getInterfaces(); 
+		for (Interface itf : dItfs) {
+			assert itf instanceof MindInterface;
+			if (((MindInterface) itf).getRole() == TypeInterface.SERVER_ROLE) {
+				singleAnno = AnnotationHelper.getAnnotation(itf, Single.class);
+				assertNotNull(singleAnno, "Expected interface '" + d.getName() + "." + itf.getName() + "' to be transformed as Single, but was not - all-single-itfs.ext failed.");
+			}
+		}
+		
+		return;
 	}
 
 }
