@@ -1,0 +1,10 @@
+
+import simple.api.Type;
+
+primitive simple.Primitive3 {
+	source {{
+		int main(void) {
+			return -8 + VALUE;
+		}
+	}};
+}

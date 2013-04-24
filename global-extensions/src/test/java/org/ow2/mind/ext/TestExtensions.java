@@ -309,7 +309,7 @@ public class TestExtensions {
 	}
 	
 	@Test(groups = {"functional"})
-	public void testCFlagsExtOnSource() throws Exception {
+	public void testCFlagsExtOnSourceFile() throws Exception {
 
 		// Init the list of ext-files
 		List<String> extFiles = new ArrayList<String>();
@@ -322,8 +322,28 @@ public class TestExtensions {
 
 		// For all bindings check that the annotation has been applied correctly
 		Source[] sources = ((ImplementationContainer) d).getSources();
-		for (Source b : sources) {
-			CFlags cflagsAnno = AnnotationHelper.getAnnotation(b, CFlags.class);
+		for (Source s : sources) {
+			CFlags cflagsAnno = AnnotationHelper.getAnnotation(s, CFlags.class);
+			assertNotNull(cflagsAnno, "Source wasn't annotated with @CFlags ! cflagsdef8.ext failed.");
+		}
+	}
+	
+	@Test(groups = {"functional"})
+	public void testCFlagsExtOnInlineSource() throws Exception {
+
+		// Init the list of ext-files
+		List<String> extFiles = new ArrayList<String>();
+		extFiles.add("cflagsdef8.ext");
+		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
+
+		Definition d = loader.load("simple.Primitive3i", context);
+		
+		assertTrue(d instanceof ImplementationContainer, "Loaded composite didn't contain any source file.");
+
+		// For all bindings check that the annotation has been applied correctly
+		Source[] sources = ((ImplementationContainer) d).getSources();
+		for (Source s : sources) {
+			CFlags cflagsAnno = AnnotationHelper.getAnnotation(s, CFlags.class);
 			assertNotNull(cflagsAnno, "Source wasn't annotated with @CFlags ! cflagsdef8.ext failed.");
 		}
 	}

@@ -304,12 +304,12 @@ public class EXTLoader extends AbstractDelegatingLoader {
 			}
 		}
 	}*/
-	
+
 	private List<Interface> matchingInterfaces(Interface[] itfs, MindInterface extItf) {
 		List<Interface> matchingItfs = new ArrayList<Interface>(Arrays.asList(itfs));
 		String extItfName = extItf.getName();
 		String extItfSignature = extItf.getSignature();
-		
+
 		// check if both are provided or both required
 		for (Interface itf : itfs) {
 			assert itf instanceof MindInterface;
@@ -341,11 +341,11 @@ public class EXTLoader extends AbstractDelegatingLoader {
 				}
 			}
 		}
-		
+
 		return matchingItfs;
 	}
 
-	
+
 	private boolean areSameKind(Definition extDef, Definition targetDef) {
 		return ((ASTHelper.isComposite(extDef) && ASTHelper.isComposite(targetDef))
 				|| ((ASTHelper.isPrimitive(extDef) && ASTHelper.isPrimitive(targetDef))
@@ -356,14 +356,14 @@ public class EXTLoader extends AbstractDelegatingLoader {
 						)
 						|| (ASTHelper.isType(extDef) && ASTHelper.isType(targetDef)));
 	}
-	
+
 	private void applyItfs(Definition extDef, Definition targetDef) {
 		if (! (extDef instanceof InterfaceContainer))
 			return;
-		
+
 		if (!areSameKind(extDef, targetDef))
 			return;
-		
+
 		for (Interface i : ((InterfaceContainer) extDef).getInterfaces()) {
 			//if (!checkCondition((Node) i, targetDef)) continue; // example: "if hasCltItf" 
 			assert i instanceof MindInterface;
@@ -372,8 +372,8 @@ public class EXTLoader extends AbstractDelegatingLoader {
 					matchingInterfaces(((InterfaceContainer) targetDef).getInterfaces(), extItf);
 			if (matchingItfs.size() == 0) {
 				return; // we don't currently want to add architectural elements
-//				if (!"*".equals(extItf.getName()) && !"*".equals(extItf.getSignature()))
-//					ASTHelper.addInterface(targetDef, extItf);
+				//				if (!"*".equals(extItf.getName()) && !"*".equals(extItf.getSignature()))
+				//					ASTHelper.addInterface(targetDef, extItf);
 			} else {
 				for (Interface itf : matchingItfs) {
 					applyAnnotations(extItf, itf);
@@ -487,7 +487,7 @@ public class EXTLoader extends AbstractDelegatingLoader {
 		String extDefSimpleName 	= "";
 		String targetDefPackage 	= "";
 		String targetDefSimpleName 	= "";
-		
+
 		String extDefName = extDef.getName(); 
 		String targetDefName = targetDef.getName();
 
@@ -546,18 +546,23 @@ public class EXTLoader extends AbstractDelegatingLoader {
 		}
 	}
 	 */
-	
+
 	private void applyContent(Definition extDef, Definition targetDef) {
 
 		assert ASTHelper.isPrimitive(extDef);
 		assert ASTHelper.isPrimitive(targetDef);
-		
-		for (Source extSourceFile : ((ImplementationContainer) extDef).getSources()) {
-			for (Source targetSourceFile : ((ImplementationContainer) targetDef).getSources()) {          
-				if (targetSourceFile.getPath() == null)
-					continue;
-				if (extSourceFile.getPath().equals("*") || targetSourceFile.getPath().equals(extSourceFile.getPath()))
-					applyAnnotations(extSourceFile, targetSourceFile);
+
+		for (Source extSource : ((ImplementationContainer) extDef).getSources()) {
+			for (Source targetSource : ((ImplementationContainer) targetDef).getSources()) {      
+				if (targetSource.getPath() != null) {
+					if(extSource.getPath().equals("*") || targetSource.getPath().equals(extSource.getPath()))
+						applyAnnotations(extSource, targetSource);
+					// TODO: else log...
+				} else if (targetSource.getCCode() != null) {
+					if(extSource.getPath().equals("*"))
+						applyAnnotations(extSource, targetSource);
+					// TODO: else log...
+				}
 			}
 		}
 	}
@@ -586,10 +591,10 @@ public class EXTLoader extends AbstractDelegatingLoader {
 						// Here type doesn't matter
 						applyDefinition(ext, definition);
 						applyItfs(ext, definition);
-						
+
 						if (ASTHelper.isPrimitive(ext) && ASTHelper.isPrimitive(definition))
 							applyContent(ext, definition);
-						
+
 						// Here we need to check
 						if (ASTHelper.isComposite(ext) && ASTHelper.isComposite(definition))
 							applyBindings(ext, definition);
