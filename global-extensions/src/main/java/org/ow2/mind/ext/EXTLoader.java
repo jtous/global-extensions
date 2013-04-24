@@ -41,10 +41,10 @@ import org.ow2.mind.adl.AbstractDelegatingLoader;
 import org.ow2.mind.adl.ast.ASTHelper;
 import org.ow2.mind.adl.ast.Binding;
 import org.ow2.mind.adl.ast.BindingContainer;
+import org.ow2.mind.adl.ast.ImplementationContainer;
 import org.ow2.mind.adl.ast.MindInterface;
-import org.ow2.mind.annotation.Annotation;
+import org.ow2.mind.adl.ast.Source;
 import org.ow2.mind.annotation.AnnotationChecker;
-import org.ow2.mind.annotation.AnnotationHelper;
 import org.ow2.mind.annotation.AnnotationHelper.AnnotationDecoration;
 import org.ow2.mind.cli.SrcPathOptionHandler;
 import org.ow2.mind.ext.cli.ExtFilesOptionHandler;
@@ -236,8 +236,6 @@ public class EXTLoader extends AbstractDelegatingLoader {
 	/**
 	 * Merging annotations from the extension node and the target definition node.
 	 * In the case of duplicates, the merge strategy is to override with the extension annotation.
-	 * 
-	 * TODO: Enable transfering annotations arguments/parameters in the operations, as a real clone (not yet supported).
 	 * 
 	 * @param The extension node from which to get annotations from.
 	 * @param The definition node to apply annotations to.
@@ -548,41 +546,21 @@ public class EXTLoader extends AbstractDelegatingLoader {
 		}
 	}
 	 */
+	
+	private void applyContent(Definition extDef, Definition targetDef) {
 
-	/* We don't want to add source files yet
-	private void applyContent(ContentFileContainer ext, ContentFileContainer container, ComponentContainer comp) {
-
-		Printer.debug("apply extension " + ext);
-
-		for (ContentFile contentFile : ((ContentFileContainer) ext).getContentFiles()) {
-			if (!checkCondition((Node) contentFile, comp)) continue;
-
-
-			String contentFileName = contentFile.getName(); 
-			//TODO: complete if we want to apply properties to content
-			//		    if (contentFileName.equals("*")) {
-			//		    for (Implementation i2 : ((ImplementationContainer) container).getImplementations()) {
-			//		    ExtendedImplementation impl2 = (ExtendedImplementation) i2;
-			//		    applyProperties((Node) impl, (Node) impl2);
-			//		    }
-			//		    } else {
-
-			boolean exist = false;
-
-			for (ContentFile contentFile2 : ((ContentFileContainer) container).getContentFiles()) {          
-				if (contentFile2.getName().equals(contentFileName)) {
-					exist = true;
-					break;
-				}
+		assert ASTHelper.isPrimitive(extDef);
+		assert ASTHelper.isPrimitive(targetDef);
+		
+		for (Source extSourceFile : ((ImplementationContainer) extDef).getSources()) {
+			for (Source targetSourceFile : ((ImplementationContainer) targetDef).getSources()) {          
+				if (targetSourceFile.getPath() == null)
+					continue;
+				if (extSourceFile.getPath().equals("*") || targetSourceFile.getPath().equals(extSourceFile.getPath()))
+					applyAnnotations(extSourceFile, targetSourceFile);
 			}
-			if(!exist) {
-				ASTHelper.addContentFile(container, ASTHelper.copyNode(contentFile, false));
-			}
-
-			//		    }
-			//		    }
 		}
-	}*/
+	}
 
 	/**
 	 * The function applies appropriate extensions, from the list of extensions given in parameter,
@@ -608,6 +586,9 @@ public class EXTLoader extends AbstractDelegatingLoader {
 						// Here type doesn't matter
 						applyDefinition(ext, definition);
 						applyItfs(ext, definition);
+						
+						if (ASTHelper.isPrimitive(ext) && ASTHelper.isPrimitive(definition))
+							applyContent(ext, definition);
 						
 						// Here we need to check
 						if (ASTHelper.isComposite(ext) && ASTHelper.isComposite(definition))

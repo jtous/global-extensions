@@ -1,0 +1,16 @@
+
+composite **.* {
+	@Single
+	provides * as *;
+}
+
+primitive **.* {
+	@Single
+	provides * as *;
+}
+
+type **.* {
+	@Single
+	provides * as *;
+}
+	

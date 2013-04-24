@@ -1,0 +1,6 @@
+
+import simple.api.Type;
+
+primitive simple.Primitive3 {
+	source primitive3.c;
+}

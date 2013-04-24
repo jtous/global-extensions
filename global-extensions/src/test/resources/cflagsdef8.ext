@@ -1,0 +1,6 @@
+
+primitive **.* {
+	
+	@CFlags("-DVALUE=8")
+	source *;
+}
