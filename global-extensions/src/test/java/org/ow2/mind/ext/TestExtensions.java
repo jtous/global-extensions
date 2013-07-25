@@ -131,6 +131,60 @@ public class TestExtensions {
 
 		return;
 	}
+	
+	/**
+	 * Test if the extension loader can apply @Static successfully on all bindings of a composite, with the help
+	 * of the all-static extension.
+	 * The all-static-per-package.ext extension used here is PER PACKAGE (simple.*) instead of any as in all-static.ext.
+	 * @throws Exception
+	 */
+	@Test(groups = {"functional"})
+	public void testApplyAllStaticPerPackage() throws Exception {
+
+		// Init the list of ext-files
+		List<String> extFiles = new ArrayList<String>();
+		extFiles.add("all-static-per-package.ext");
+		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
+
+		Definition d = loader.load("simple.Composite", context);
+		assertTrue(d instanceof BindingContainer, "Loaded composite didn't contain any binding.");
+
+		// For all bindings check that the annotation has been applied correctly
+		Binding[] bindings = ((BindingContainer) d).getBindings();
+		for (Binding b : bindings) {
+			Static staticAnno = AnnotationHelper.getAnnotation(b, Static.class);
+			assertNotNull(staticAnno, "Binding wasn't annotated @Static ! all-static-per-package.ext failed.");
+		}
+
+		return;
+	}
+	
+	/**
+	 * Test if the extension loader can apply @Static successfully on all bindings of a composite, with the help
+	 * of the all-static extension.
+	 * The all-static-per-package.ext extension used here is PER PACKAGE (simple.*) instead of any as in all-static.ext.
+	 * @throws Exception
+	 */
+	@Test(groups = {"functional"})
+	public void testApplyAllStaticPerDefinition() throws Exception {
+
+		// Init the list of ext-files
+		List<String> extFiles = new ArrayList<String>();
+		extFiles.add("all-static-per-def.ext");
+		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
+
+		Definition d = loader.load("simple.Composite", context);
+		assertTrue(d instanceof BindingContainer, "Loaded composite didn't contain any binding.");
+
+		// For all bindings check that the annotation has been applied correctly
+		Binding[] bindings = ((BindingContainer) d).getBindings();
+		for (Binding b : bindings) {
+			Static staticAnno = AnnotationHelper.getAnnotation(b, Static.class);
+			assertNotNull(staticAnno, "Binding wasn't annotated @Static ! all-static-per-def.ext failed.");
+		}
+
+		return;
+	}
 
 	/**
 	 * Test if the extension loader can apply @Singleton successfully on a composite, with the help

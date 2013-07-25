@@ -701,21 +701,24 @@ public class EXTLoader extends AbstractDelegatingLoader {
 	 * isConcernedByExt is used to test if componentPartialPath sub-component's might be concern by
 	 * a given extension
 	 * @param extension
-	 * @param definitionPartialPath
+	 * @param definitionFullName
 	 * @return true if some sub-components of componentPartialPath are possibly concerned by the extension
 	 */
-	private boolean isConcernedByExt(Definition extension, String definitionPartialPath){
+	private boolean isConcernedByExt(Definition extension, String definitionFullName){
 		String extensionTargetName = extension.getName();
+		
+		String definitionPackage = definitionFullName.substring(0, definitionFullName.lastIndexOf("."));
+		
 		if (extensionTargetName.contains(".**")){
-			if(definitionPartialPath.length()>0){
-				if(extensionTargetName.indexOf(".**") > definitionPartialPath.length())
+			if(definitionFullName.length()>0){
+				if(extensionTargetName.indexOf(".**") > definitionFullName.length())
 					return false;
 
-				return extensionTargetName.startsWith(definitionPartialPath.substring(0, extensionTargetName.indexOf(".**")));
+				return extensionTargetName.startsWith(definitionFullName.substring(0, extensionTargetName.indexOf(".**")));
 			} else
 				return true;
 		} else
-			return extensionTargetName.startsWith("**") || extensionTargetName.startsWith(definitionPartialPath);
+			return extensionTargetName.startsWith("**") || extensionTargetName.startsWith(definitionPackage);
 	}
 
 }

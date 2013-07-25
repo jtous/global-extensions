@@ -1,0 +1,8 @@
+
+
+
+composite simple.* {
+	@Static
+	binds *.* to *.*;
+}
+	
