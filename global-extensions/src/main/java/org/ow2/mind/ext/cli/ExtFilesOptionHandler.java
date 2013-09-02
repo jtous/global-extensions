@@ -23,7 +23,9 @@
 package org.ow2.mind.ext.cli;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -103,7 +105,13 @@ public class ExtFilesOptionHandler implements CommandOptionHandler {
 				continue;
 			}
 			
-			f = new File(extURL.getPath());
+			try {
+				f = new File(URLDecoder.decode(extURL.getFile(), "UTF-8" ));
+			} catch (UnsupportedEncodingException e) {
+				logger.warning("'" + extFile + "' Character Encoding isn't UTF-8 compatible - skipping");
+				continue;
+			}
+			
 			if (!f.exists()) {
 				logger.warning("'" + f.getAbsolutePath() + "' extension can't be found ");
 			} else if (f.isDirectory()) {
