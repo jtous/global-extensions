@@ -17,3 +17,5 @@ script:
   - "cd .."
   - "cd global-extensions"
   - "mvn -U verify"
+  
+  
