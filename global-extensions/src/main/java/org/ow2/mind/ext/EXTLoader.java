@@ -706,19 +706,27 @@ public class EXTLoader extends AbstractDelegatingLoader {
 	 */
 	private boolean isConcernedByExt(Definition extension, String definitionFullName){
 		String extensionTargetName = extension.getName();
-		
-		String definitionPackage = definitionFullName.substring(0, definitionFullName.lastIndexOf("."));
+		String definitionPackage;
+		int lastDotIndex = definitionFullName.lastIndexOf(".");
+		if (lastDotIndex == -1) {
+			definitionPackage = "";
+		} else {
+			definitionPackage = definitionFullName.substring(0, lastDotIndex);
+		}
 		
 		if (extensionTargetName.contains(".**")){
 			if(definitionFullName.length()>0){
-				if(extensionTargetName.indexOf(".**") > definitionFullName.length())
+				if(extensionTargetName.indexOf(".**") > definitionFullName.length()) {
 					return false;
-
-				return extensionTargetName.startsWith(definitionFullName.substring(0, extensionTargetName.indexOf(".**")));
-			} else
+				} else {
+					return extensionTargetName.startsWith(definitionFullName.substring(0, extensionTargetName.indexOf(".**")));
+				}
+			} else {
 				return true;
-		} else
+			}
+		} else {
 			return extensionTargetName.startsWith("**") || extensionTargetName.startsWith(definitionPackage);
+		}
 	}
 
 }
