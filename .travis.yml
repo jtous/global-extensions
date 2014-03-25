@@ -4,6 +4,10 @@ before_install:
   - "cd mind-compiler"
   - "mvn -U install -DskipTests -PCI-profile"
   - "cd .."
+  - "git clone https://github.com/StephaneSeyvoz/Optimization-Backend.git"
+  - "cd Optimization-Backend"
+  - "mvn -U install -DskipTests"
+  - "cd .."
 install:
   - "cd ext-parser"
   - "mvn -U clean"
