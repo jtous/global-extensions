@@ -133,6 +133,27 @@ public class TestExtensions {
 	}
 	
 	/**
+	 * Test if the extension loader can apply @Singleton successfully on a component in the default package.
+	 * @throws Exception
+	 */
+	@Test(groups = {"functional"})
+	public void testApplyNoPackage() throws Exception {
+
+		// Init the list of ext-files
+		List<String> extFiles = new ArrayList<String>();
+		extFiles.add("all-singleton.ext");
+		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
+
+		Definition d = loader.load("NoPackage", context);
+
+		Singleton singletonAnno = AnnotationHelper.getAnnotation(d, Singleton.class);
+
+		assertNotNull(singletonAnno, "Expected definition to be transformed as a Singleton, but was not - all-singleton.ext failed on component in default package.");
+
+		return;
+	}	
+	
+	/**
 	 * Test if the extension loader can apply @Static successfully on all bindings of a composite, with the help
 	 * of the all-static extension.
 	 * The all-static-per-package.ext extension used here is PER PACKAGE (simple.*) instead of any as in all-static.ext.
