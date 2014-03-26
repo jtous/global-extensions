@@ -37,6 +37,7 @@ import org.objectweb.fractal.adl.interfaces.Interface;
 import org.objectweb.fractal.adl.interfaces.InterfaceContainer;
 import org.objectweb.fractal.adl.types.TypeInterface;
 import org.ow2.mind.CommonFrontendModule;
+import org.ow2.mind.adl.ADLLoader;
 import org.ow2.mind.adl.AbstractADLFrontendModule;
 import org.ow2.mind.adl.annotation.AnnotationLoader;
 import org.ow2.mind.adl.annotation.predefined.CFlags;
@@ -99,13 +100,6 @@ public class TestExtensions {
 		context = new HashMap<Object, Object>();
 	}
 
-	protected InputStream getEXT(final String fileName) throws Exception {
-		final ClassLoader loader = getClass().getClassLoader();
-		final InputStream is = loader.getResourceAsStream(fileName);
-		assertNotNull(is, "Can't find input file \"" + fileName + "\"");
-		return is;
-	}
-
 	/**
 	 * Test if the extension loader can apply @Static successfully on all bindings of a composite, with the help
 	 * of the all-static extension.
@@ -131,6 +125,48 @@ public class TestExtensions {
 
 		return;
 	}
+	
+	/**
+	 * Test if the extension loader can apply @Singleton successfully on a component in the default package.
+	 * @throws Exception
+	 */
+	@Test(groups = {"functional"})
+	public void testApplyNoPackage() throws Exception {
+
+		// Init the list of ext-files
+		List<String> extFiles = new ArrayList<String>();
+		extFiles.add("all-singleton.ext");
+		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
+
+		Definition d = loader.load("NoPackage", context);
+
+		Singleton singletonAnno = AnnotationHelper.getAnnotation(d, Singleton.class);
+
+		assertNotNull(singletonAnno, "Expected definition to be transformed as a Singleton, but was not - all-singleton.ext failed on component in default package.");
+
+		return;
+	}	
+	
+//	/**
+//	 * Test if the extension loader can apply @Singleton successfully from an ext file not in the default package.
+//	 * @throws Exception
+//	 */
+//	@Test(groups = {"functional"})
+//	public void testApplyExtInPackage() throws Exception {
+//
+//		// Init the list of ext-files
+//		List<String> extFiles = new ArrayList<String>();
+//		extFiles.add( ExtFilesOptionHandler.findSourceEXT("simple.extInPackage", context).getPath() );
+//		context.put(ExtFilesOptionHandler.EXT_FILES_CONTEXT_KEY, extFiles);
+//
+//		Definition d = loader.load("NoPackage", context);
+//
+//		Singleton singletonAnno = AnnotationHelper.getAnnotation(d, Singleton.class);
+//
+//		assertNotNull(singletonAnno, "Expected definition to be transformed as a Singleton, but was not - Failed to get extention from package.");
+//
+//		return;
+//	}	
 	
 	/**
 	 * Test if the extension loader can apply @Static successfully on all bindings of a composite, with the help

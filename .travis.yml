@@ -1,0 +1,25 @@
+language: java
+before_install:
+  - "git clone https://github.com/StephaneSeyvoz/mind-compiler.git"
+  - "cd mind-compiler"
+  - "mvn -U install -DskipTests -PCI-profile"
+  - "cd .."
+  - "git clone https://github.com/StephaneSeyvoz/Optimization-Backend.git"
+  - "cd Optimization-Backend"
+  - "mvn -U install -DskipTests"
+  - "cd .."
+install:
+  - "cd ext-parser"
+  - "mvn -U clean"
+  - "cd .."
+  - "cd global-extensions"
+  - "mvn -U clean"
+  - "cd .."
+script:
+  - "cd ext-parser"
+  - "mvn -U install"
+  - "cd .."
+  - "cd global-extensions"
+  - "mvn -U verify"
+  
+  
