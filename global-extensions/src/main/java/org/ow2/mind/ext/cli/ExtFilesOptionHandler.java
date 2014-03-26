@@ -45,7 +45,7 @@ import org.ow2.mind.plugin.util.Assert;
 public class ExtFilesOptionHandler implements CommandOptionHandler {
 
 	/** The ID of the "src-path" option. */
-	public static final String  EXT_FILES_ID             = "org.ow2.mind.ext.ExtFiles";
+	public static final String  EXT_FILES_ID         = "org.ow2.mind.ext.ExtFiles";
 
 	public static final String EXT_FILES_CONTEXT_KEY = "ext-files";
 
@@ -68,10 +68,10 @@ public class ExtFilesOptionHandler implements CommandOptionHandler {
 	 * @return
 	 */
 	public static URL findSourceEXT(final String name, final Map<Object, Object> context) {
-		return SrcPathOptionHandler.getSourceClassLoader(context).getResource(name + ".ext");
+		ClassLoader loader = SrcPathOptionHandler.getSourceClassLoader(context);
+		return loader.getResource(name);
 	}
 
-	// TODO: allow using an ext-folder where to find ext-files ?
 	public void processCommandOption(CmdOption cmdOption, CommandLine cmdLine,
 			Map<Object, Object> context) throws InvalidCommandLineException {
 
@@ -98,19 +98,15 @@ public class ExtFilesOptionHandler implements CommandOptionHandler {
 		File f;
 		for (String extFile : newExtFiles) {
 			// check ext files
+			String extPath = extFile.replace(".", "/") + ".ext";
 			
-			URL extURL = findSourceEXT(extFile, context);
+			URL extURL = findSourceEXT(extPath, context);
 			if (extURL == null || extURL.getPath() == null) {
-				logger.warning("'" + extFile + "' extension can't be found  - skipping");
+				logger.warning("'" + extPath + "' extension can't be found  - skipping");
 				continue;
 			}
 			
-			try {
-				f = new File(URLDecoder.decode(extURL.getFile(), "UTF-8" ));
-			} catch (UnsupportedEncodingException e) {
-				logger.warning("'" + extFile + "' Character Encoding isn't UTF-8 compatible - skipping");
-				continue;
-			}
+			f = new File(extURL.getPath());
 			
 			if (!f.exists()) {
 				logger.warning("'" + f.getAbsolutePath() + "' extension can't be found ");
@@ -119,7 +115,7 @@ public class ExtFilesOptionHandler implements CommandOptionHandler {
 						+ "\" is a directory, extension ignored.");
 			} else {
 				// Add when file exists
-				validContextExtFiles.add(extFile + ".ext");
+				validContextExtFiles.add(extPath);
 			}
 		}
 

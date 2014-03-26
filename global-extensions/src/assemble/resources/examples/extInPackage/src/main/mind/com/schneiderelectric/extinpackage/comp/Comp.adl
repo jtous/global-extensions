@@ -1,0 +1,4 @@
+primitive com.schneiderelectric.extinpackage.comp.Comp {
+ 	provides boot.Main as entryPoint;
+  	source Comp.c;
+}
